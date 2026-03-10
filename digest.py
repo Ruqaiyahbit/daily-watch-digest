@@ -1,6 +1,6 @@
 import requests
 from collections import defaultdict
-from config import RESEND_API_KEY, DIGEST_FROM_EMAIL, DIGEST_TO_EMAIL
+from config import RESEND_API_KEY, DIGEST_FROM_EMAIL, DIGEST_TO_EMAIL, DIGEST_TO_EMAILS
 
 def build_digest_html(items):
     grouped = defaultdict(lambda: defaultdict(list))
@@ -27,12 +27,12 @@ def build_digest_html(items):
                 continue
             html.append(f"<h4 style='text-transform:capitalize'>{provider} ({len(entries)})</h4>")
             html.append("<ul>")
-            for e in sorted(entries, key=lambda x: x.get('published_at', ''), reverse=True):
-                title = (e.get('title') or '(untitled)').replace('<', '&lt;').replace('>', '&gt;')
-                source = (e.get('source_name') or '').replace('<', '&lt;').replace('>', '&gt;')
-                published = e.get('published_at') or ''
-                url = e.get('url') or '#'
-                summary = (e.get('summary') or '')[:220].replace('<', '&lt;').replace('>', '&gt;')
+            for e in sorted(entries, key=lambda x: x.get("published_at", ""), reverse=True):
+                title = (e.get("title") or "(untitled)").replace("<", "&lt;").replace(">", "&gt;")
+                source = (e.get("source_name") or "").replace("<", "&lt;").replace(">", "&gt;")
+                published = e.get("published_at") or ""
+                url = e.get("url") or "#"
+                summary = (e.get("summary") or "")[:220].replace("<", "&lt;").replace(">", "&gt;")
 
                 html.append(
                     f"<li style='margin-bottom:8px'>"
@@ -47,8 +47,13 @@ def build_digest_html(items):
     return "".join(html)
 
 def send_via_resend(subject: str, html: str):
-    if not (RESEND_API_KEY and DIGEST_FROM_EMAIL and DIGEST_TO_EMAIL):
-        raise RuntimeError("Missing RESEND_API_KEY / DIGEST_FROM_EMAIL / DIGEST_TO_EMAIL")
+    # Build recipient list from DIGEST_TO_EMAILS, fallback to DIGEST_TO_EMAIL
+    to_list = [e.strip() for e in (DIGEST_TO_EMAILS or "").split(",") if e.strip()]
+    if not to_list and DIGEST_TO_EMAIL:
+        to_list = [DIGEST_TO_EMAIL.strip()]
+
+    if not (RESEND_API_KEY and DIGEST_FROM_EMAIL and to_list):
+        raise RuntimeError("Missing RESEND_API_KEY / DIGEST_FROM_EMAIL / DIGEST_TO_EMAILS (or DIGEST_TO_EMAIL)")
 
     r = requests.post(
         "https://api.resend.com/emails",
@@ -58,7 +63,7 @@ def send_via_resend(subject: str, html: str):
         },
         json={
             "from": DIGEST_FROM_EMAIL,
-            "to": [DIGEST_TO_EMAIL],
+            "to": to_list,
             "subject": subject,
             "html": html,
         },

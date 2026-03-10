@@ -61,7 +61,8 @@ NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "")
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 DIGEST_FROM_EMAIL = os.getenv("DIGEST_FROM_EMAIL", "")
-DIGEST_TO_EMAILS = os.getenv("DIGEST_TO_EMAILS", "")
+DIGEST_TO_EMAIL = os.getenv("DIGEST_TO_EMAIL", "")        
+DIGEST_TO_EMAILS = os.getenv("DIGEST_TO_EMAILS", "")       
 
 DB_PATH = os.getenv("DB_PATH", "watch.db")
 LOOKBACK_HOURS = int(os.getenv("LOOKBACK_HOURS", "24"))
